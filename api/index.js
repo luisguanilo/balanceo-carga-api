@@ -1,13 +1,18 @@
 const http = require('http');
 
 const PORT = process.env.PORT || 3000;
+const CONTAINER_NAME = process.env.CONTAINER_NAME || 'API';
 
 const server = http.createServer((req, res) => {
-  console.log(`Petición recibida en puerto ${PORT}`);
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end(`Hola desde la API en el puerto ${PORT}\n`);
+  if (req.method === 'GET' && req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end(`hola mundo desde ${CONTAINER_NAME}`);
+  } else {
+    res.writeHead(404);
+    res.end('no hay respuesta, no hay');
+  }
 });
 
 server.listen(PORT, () => {
-  console.log(`Servidor escuchando en puerto ${PORT}`);
+  console.log(`servidor corriendo desde ${PORT}`);
 });

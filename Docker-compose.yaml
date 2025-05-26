@@ -1,26 +1,43 @@
-version: '3.8'
+version: "3.9"
 
 services:
   api1:
-    build: ./api
+    build:
+      context: ./api
+    container_name: api1
     environment:
-      - PORT=3001
+      - PORT=3000
+      - CONTAINER_NAME=api1
     ports:
       - "3001:3000"
+    networks:
+      - app-network
 
   api2:
-    build: ./api
+    build:
+      context: ./api
+    container_name: api2
     environment:
-      - PORT=3002
+      - PORT=3000
+      - CONTAINER_NAME=api2
     ports:
       - "3002:3000"
+    networks:
+      - app-network
 
   nginx:
     image: nginx:latest
+    container_name: nginx
+    ports:
+      - "8080:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
-    ports:
-      - "8081:80"
     depends_on:
       - api1
       - api2
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
