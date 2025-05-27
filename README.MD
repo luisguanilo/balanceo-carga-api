@@ -93,9 +93,9 @@ docker-compose up --build
 ## Notas
 - Los puertos mapeados son:
 
-    - `API1: localhost:3001` → contenedor puerto 3000
+    - `API1: localhost:3002` → contenedor puerto 3000
 
-    - `API2: localhost:3002` → contenedor puerto 3000
+    - `API2: localhost:3003` → contenedor puerto 3000
 
     - `NGINX: localhost:8080` → balanceo a API1 y API2
 
