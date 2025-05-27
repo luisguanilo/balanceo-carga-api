@@ -77,7 +77,7 @@ https://github.com/luisguanilo/balanceo-carga-api.git
 ```
 ## Construir y levantar los contenedores:
 ```
-docker-compose up --build
+docker compose up --build -d
 ```
 
 ## Archivos principales
@@ -100,7 +100,7 @@ docker-compose up --build
     - `NGINX: localhost:8080` → balanceo a API1 y API2
 
 ## Podemos detener los contenedores con:
-`docker-compose down`
+`docker compose down`
 
 ## Balanceo de carga con NGINX y cómo identificar el backend
 
