@@ -101,3 +101,86 @@ docker-compose up --build
 
 ## Podemos detener los contenedores con:
 `docker-compose down`
+
+## Balanceo de carga con NGINX y cómo identificar el backend
+
+Este laboratorio utiliza NGINX como balanceador de carga para distribuir las peticiones entre dos servicios backend: `api1` y `api2`. Ambos corren en contenedores Docker diferentes y escuchan en el puerto 3000.
+
+### Identificación de backend en los logs de NGINX
+
+En los logs de NGINX, cada petición derivada a un backend se registra con la IP y puerto del contenedor destino, por ejemplo:
+
+`upstream: 172.18.0.2:3000`
+
+`upstream: 172.18.0.3:3000`
+
+```
+CONTAINER ID   IMAGE          COMMAND                  CREATED          STATUS         PORTS                    NAMES
+9ef55e24047c   lab-s09-api2   "docker-entrypoint.s…"   6 minutes ago    Up 5 minutes   0.0.0.0:3002->3000/tcp   api2
+5162260ab4d2   lab-s09-api1   "docker-entrypoint.s…"   6 minutes ago    Up 5 minutes   0.0.0.0:3001->3000/tcp   api1
+6b042bbe5858   nginx:latest   "/docker-entrypoint.…"   14 minutes ago   Up 5 minutes   0.0.0.0:80->80/tcp       nginx
+```
+
+Estas IP corresponden a los contenedores Docker de `api1` y `api2` respectivamente.
+
+Para saber qué IP corresponde a cada contenedor, usamos:
+
+```bash
+docker inspect api1 | Select-String "IPAddress"
+
+y la respuesta en consola es la siguiente:
+
+ "SecondaryIPAddresses": null,
+            "IPAddress": "",
+                    "IPAddress": "172.18.0.2",
+```
+
+```bash
+docker inspect api2 | Select-String "IPAddress"
+y la respuesta en consola es la siguiente:
+
+ "SecondaryIPAddresses": null,
+            "IPAddress": "",
+                    "IPAddress": "172.18.0.3",
+```
+
+## Visualizar logs
+usamos el siguiente comando:
+
+`docker logs nginx`
+
+el cual nos da la siguiente respuesta en consola
+
+````
+172.18.0.1 - - [27/May/2025:00:43:18 +0000] "GET / HTTP/1.1" 200 32 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-PE) WindowsPowerShell/5.1.26100.4061" upstream: 172.18.0.2:3000
+172.18.0.1 - - [27/May/2025:00:43:22 +0000] "GET / HTTP/1.1" 200 32 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-PE) WindowsPowerShell/5.1.26100.4061" upstream: 172.18.0.3:3000
+172.18.0.1 - - [27/May/2025:00:43:23 +0000] "GET / HTTP/1.1" 200 32 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-PE) WindowsPowerShell/5.1.26100.4061" upstream: 172.18.0.2:3000
+172.18.0.1 - - [27/May/2025:00:43:24 +0000] "GET / HTTP/1.1" 200 32 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-PE) WindowsPowerShell/5.1.26100.4061" upstream: 172.18.0.3:3000
+172.18.0.1 - - [27/May/2025:00:43:26 +0000] "GET / HTTP/1.1" 200 32 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-PE) WindowsPowerShell/5.1.26100.4061" upstream: 172.18.0.2:3000
+172.18.0.1 - - [27/May/2025:00:43:28 +0000] "GET / HTTP/1.1" 200 32 "-" "Mozilla/5.0 (Windows NT; Windows NT 10.0; es-PE) WindowsPowerShell/5.1.26100.4061" upstream: 172.18.0.3:3000`
+````
+
+al final de cada linea observamos 172.18.0.3:300 ó 172.18.0.2:3000 como se menciona un poco antes. esto nos indica que hay peticiones desde el backend y se direcciona hacia un api o hacia otro api
+
+
+## Arquitectura del sistema
+
+```plaintext
+     Cliente
+        │
+        ▼
+   +-----------+
+   |  NGINX LB |
+   +-----------+
+    /         \
+   /           \
+▼               ▼
+API 1 (Node.js)  API 2 (Node.js)
+172.18.0.2:3000  172.18.0.3:3000
+```
+## Descripción del funcionamiento
+- **Cliente**: Hace peticiones HTTP.
+
+- **NGINX LB**: Recibe las peticiones y las distribuye en balanceo *round-robin* entre `api1` y `api2`.
+
+- **API 1 / API 2**: Contenedores Node.js escuchando en el puerto `3000`, respondiendo `"Servidor corriendo desde 3000"`.
